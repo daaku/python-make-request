@@ -72,7 +72,7 @@ def make_request(url, method='GET', parameters={}, headers={}):
         logging.debug('Using HTTPSConnection')
         connection = httplib.HTTPSConnection(parts.netloc)
     else:
-        logging.debug('Using HTTPSConnection')
+        logging.debug('Using HTTPConnection')
         connection = httplib.HTTPConnection(parts.netloc)
 
     # drop the query string and use it if it exists
