@@ -76,7 +76,7 @@ def make_request(url, method='GET', parameters={}, headers={}):
         connection = httplib.HTTPConnection(parts.netloc)
 
     # drop the query string and use it if it exists
-    url = parts.scheme + '://' + parts.netloc + parts.path
+    url = parts.path
     if parts.query != '':
         qs_params = dict([(k, v[0]) for k, v in cgi.parse_qs(parts.query).iteritems()])
         qs_params.update(parameters)
