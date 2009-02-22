@@ -57,6 +57,7 @@ def make_request(url, method='GET', content=None, headers={}):
     u'xXyYzZ'
 
     """
+    headers = headers.copy()
 
     parts = urlparse.urlparse(url)
     if parts.scheme == 'https':
