@@ -2,7 +2,7 @@
 import collections
 import httplib
 import logging
-import urlparse
+from urlparse import urlparse
 from urlencoding import parse_qs, compose_qs
 
 
@@ -33,7 +33,7 @@ def prepare_request(url, method='GET', content=None, headers={}):
     # we potentially modify them
     headers = headers.copy()
 
-    parts = urlparse.urlparse(url)
+    parts = urlparse(url)
     url = parts.path
     if parts.params:
         url += ';' + parts.params
@@ -107,7 +107,7 @@ def make_request(*args, **kwargs):
     >>> j['post_params']
     {u'a': u'1', u'b': [u'2', u'3']}
 
-    Raw Content Body with DELETE request:
+    Raw Content Body with POST request:
     >>> response = make_request(BASE_URL, 'POST', u'xXyYzZ', {'Content-Type': 'text/plain'})
     >>> response.status
     200
