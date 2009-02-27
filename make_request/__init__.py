@@ -6,14 +6,75 @@ import urlparse
 from urlencoding import parse_qs, compose_qs
 
 
-def make_request(url, method='GET', content=None, headers={}):
+def prepare_request(url, method='GET', content=None, headers={}):
     """
-    Make HTTP requests.
+    This is the generic processing logic used by the various APIs.
 
     If content is a Mapping object, parameters will be processed. In this case,
     query parameters from the URL will be processed and merged with the content
     dict. They will then be appended to the URL or sent as the body based on
     the method.
+
+    Arguments:
+
+        `url`
+            The URL - query parameters will be parsed out.
+
+        `method`
+            The HTTP method to use.
+
+        `content`
+            A dict of key/values or string/unicode value.
+
+        `headers`
+            A dict of headers.
+
+    """
+    # we potentially modify them
+    headers = headers.copy()
+
+    parts = urlparse.urlparse(url)
+    url = parts.path
+    if parts.params:
+        url += ';' + parts.params
+
+    # we dont do much with the url/body unless content is a Mapping object
+    if isinstance(content, collections.Mapping):
+        # merge the parameters in the query string
+        if parts.query:
+            qs_params = parse_qs(parts.query)
+            qs_params.update(content)
+            content = qs_params
+
+        # put the content in the url or convert to string body
+        if content:
+            content = compose_qs(content)
+            if method in ('HEAD', 'GET'):
+                url += '?' + content
+                content = None
+            else:
+                if 'Content-Type' not in headers:
+                    headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    else:
+        if parts.query:
+            url += '?' + parts.query
+
+    # add Content-Length if needed
+    if content and 'Content-Length' not in headers:
+        headers['Content-Length'] = len(content)
+
+    return {
+        'scheme': parts.scheme,
+        'netloc': parts.netloc,
+        'url': url,
+        'method': method,
+        'content': content,
+        'headers': headers,
+    }
+
+def make_request(*args, **kwargs):
+    """
+    Make HTTP requests.
 
     >>> import json
     >>> BASE_URL = 'http://localhost:6666/echo'
@@ -57,51 +118,15 @@ def make_request(url, method='GET', content=None, headers={}):
     u'xXyYzZ'
 
     """
-    headers = headers.copy()
+    opts = prepare_request(*args, **kwargs)
+    logging.debug(str(opts))
 
-    parts = urlparse.urlparse(url)
-    if parts.scheme == 'https':
-        logging.debug('Using HTTPSConnection')
-        connection = httplib.HTTPSConnection(parts.netloc)
+    if opts['scheme'] == 'https':
+        connection = httplib.HTTPSConnection(opts['netloc'])
     else:
-        logging.debug('Using HTTPConnection')
-        connection = httplib.HTTPConnection(parts.netloc)
+        connection = httplib.HTTPConnection(opts['netloc'])
 
-    url = parts.path
-    if parts.params:
-        url += ';' + parts.params
-
-    # we dont do much with the url/body unless content is a Mapping object
-    if isinstance(content, collections.Mapping):
-        # drop the query string and use it if it exists
-        if parts.query:
-            qs_params = parse_qs(parts.query)
-            qs_params.update(content)
-            content = qs_params
-
-        # put the content in the url or convert to string body
-        if content:
-            content = compose_qs(content)
-            if method in ('HEAD', 'GET'):
-                url += '?' + content
-                content = None
-            else:
-                if 'Content-Type' not in headers:
-                    headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    else:
-        if parts.query:
-            url += '?' + parts.query
-
-    # add Content-Length if needed
-    if content and 'Content-Length' not in headers:
-        headers['Content-Length'] = len(content)
-
-    logging.debug('Method: ' + str(method))
-    logging.debug('Url: ' + str(url))
-    logging.debug('Content: ' + str(content))
-    logging.debug('Headers: ' + str(headers))
-
-    connection.request(method, url, content, headers)
+    connection.request(opts['method'], opts['url'], opts['content'], opts['headers'])
     return connection.getresponse()
 
 if __name__ == "__main__":
