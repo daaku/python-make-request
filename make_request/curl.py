@@ -23,7 +23,7 @@ class CurlResponse(httplib.HTTPResponse):
         self.begin()
 
     def read(self, *args, **kwargs):
-        return self.handle.fp.read(*args, **kwargs)
+        return self.fp.read(*args, **kwargs)
 
 def prepare_curl_handle(opts):
     curl_opts = opts.pop('curl', {})
@@ -45,10 +45,10 @@ def prepare_curl_handle(opts):
 
 def make_request(*args, **kwargs):
     """
-    >>> BASE_URL = 'http://json-service.appspot.com/echo'
+    >>> ECHO_URL = 'http://json-service.appspot.com/echo'
 
     POST request with array value using parameters.
-    >>> response = make_request(BASE_URL, 'POST', {'a':1, 'b': [2,3]})
+    >>> response = make_request(ECHO_URL, 'POST', {'a':1, 'b': [2,3]})
     >>> response.status
     200
     >>> import json
@@ -70,11 +70,11 @@ def make_request(*args, **kwargs):
 
 def multi_requests(*requests):
     """
-    >>> BASE_URL = 'http://json-service.appspot.com/sleep'
+    >>> SLEEP_URL = 'http://json-service.appspot.com/sleep'
 
     The order of responses matches the order of requests.
-    >>> r1 = {'url': BASE_URL, 'content': {'seconds': 3}}
-    >>> r2 = {'url': BASE_URL, 'content': {'seconds': 1}}
+    >>> r1 = {'url': SLEEP_URL, 'content': {'seconds': 3}}
+    >>> r2 = {'url': SLEEP_URL, 'content': {'seconds': 1}}
     >>> responses = multi_requests(r1, r2)
     >>> responses[0].read()
     'Slept for 3'
@@ -84,8 +84,8 @@ def multi_requests(*requests):
     The order of callbacks matches the order of responses from the servers.
     >>> responses_bytime = []
     >>> c = lambda r: responses_bytime.append(r)
-    >>> r1 = {'url': BASE_URL, 'content': {'seconds': 3}, 'callback': c}
-    >>> r2 = {'url': BASE_URL, 'content': {'seconds': 1}, 'callback': c}
+    >>> r1 = {'url': SLEEP_URL, 'content': {'seconds': 3}, 'callback': c}
+    >>> r2 = {'url': SLEEP_URL, 'content': {'seconds': 1}, 'callback': c}
     >>> responses_original = multi_requests(r1, r2)
     >>> responses_bytime[0].read()
     'Slept for 1'
