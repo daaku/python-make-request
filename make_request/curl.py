@@ -86,12 +86,15 @@ def multi_requests(*requests):
     >>> c = lambda r: responses_bytime.append(r)
     >>> r1 = {'url': BASE_URL, 'content': {'seconds': 3}, 'callback': c}
     >>> r2 = {'url': BASE_URL, 'content': {'seconds': 1}, 'callback': c}
-    >>> r3 = {'url': 'FAIL'}
     >>> responses_original = multi_requests(r1, r2)
     >>> responses_bytime[0].read()
     'Slept for 1'
     >>> responses_bytime[1].read()
     'Slept for 3'
+    >>> responses_original[0] is responses_bytime[1]
+    True
+    >>> responses_original[1] is responses_bytime[0]
+    True
 
     """
     handles = []
